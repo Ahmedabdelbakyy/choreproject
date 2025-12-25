@@ -17,9 +17,7 @@ public class SchedulerService {
         this.whatsAppService = whatsAppService;
     }
 
-    // "cron" is a time setting. 
-    // "0 * * * * *" means "Run at the start of EVERY minute" (for testing)
-    // Later we will change it to "0 0 8 * * *" (8:00 AM daily)
+    // Currently set to run every minute for testing. 
     @Scheduled(cron = "0 * * * * *") 
     public void sendDailyChoreReminder() {
         System.out.println("--- SCHEDULER TRIGGERED: " + LocalDateTime.now() + " ---");
@@ -31,9 +29,8 @@ public class SchedulerService {
         FamilyMember newMember = choreManager.getCurrentMember();
         System.out.println("New Chore Assignee: " + newMember.getName());
 
-        // 3. Send the notification
-        // Note: This might fail if the 24-hour window is closed (we will fix this next with Templates)
-        whatsAppService.sendUserInfoMessage(newMember.getPhoneNumber(), 
-            "GOOD MORNING! It is now your turn to do the chores.");
+        // 3. Send the TEMPLATE
+        // This will now work even if the phone hasn't messaged the bot in 24 hours
+        whatsAppService.sendTemplateMessage(newMember.getPhoneNumber(), "daily_chore_alert", newMember.getName());
     }
 }
