@@ -137,7 +137,7 @@ public class WhatsAppService {
         Map<String, Object> template = new HashMap<>();
         template.put("name", templateName);
         Map<String, String> language = new HashMap<>();
-        language.put("code", "en_US"); // Ensure this matches your template!
+        language.put("code", "en"); // Ensure this matches your template!
         template.put("language", language);
         if (variable != null) {
             List<Map<String, Object>> components = new ArrayList<>();
