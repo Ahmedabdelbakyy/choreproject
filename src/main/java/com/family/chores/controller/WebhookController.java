@@ -87,6 +87,20 @@ public class WebhookController {
                     }
                 }
 
+                else if ("button".equals(type)) {
+                    String buttonId = message.path("button").path("payload").asText();
+                    System.out.println("Button Clicked: " + buttonId);
+
+                    if (buttonId.equals("Complain")) {
+                        userStates.put(incomingNumber, "COMPLAINING");
+                        whatsAppService.sendUserInfoMessage(incomingNumber, 
+                            "I am listening. 📸 Please send a PHOTO of the mess (or text me the issue) now.");
+                    }
+                    else if (buttonId.equals("Bypass")) {
+                        handleSkipRequest(incomingNumber);
+                    } 
+                }
+
                 // --- 2. HANDLE BUTTON CLICKS ---
                 else if ("interactive".equals(type)) {
                     String buttonId = message.path("interactive").path("button_reply").path("id").asText();
@@ -112,11 +126,7 @@ public class WebhookController {
                         handleSkipRequest(incomingNumber);
                     } 
                     // --- NEW: Set State when Complain is clicked ---
-                    else if (buttonId.equals("BTN_COMPLAIN")) {
-                        userStates.put(incomingNumber, "COMPLAINING"); // <--- Set Memory
-                        whatsAppService.sendUserInfoMessage(incomingNumber, 
-                            "I am listening. 📸 Please send a PHOTO of the mess (or text me the issue) now.");
-                    }
+                
                     // -----------------------------------------------
                     else if (buttonId.equals("BTN_STATUS")) {
                         FamilyMember current = choreManager.getCurrentMember();
