@@ -111,6 +111,7 @@ public class WebhookController {
                          choreManager.rotateTurn();
                          whatsAppService.sendUserInfoMessage(incomingNumber, 
                              "Force Skip Successful. New Turn: " + choreManager.getCurrentMember().getName());
+                              whatsAppService.sendTemplateMessage(choreManager.getCurrentMember().getPhoneNumber(), "daily_chore_alert", choreManager.getCurrentMember().getName());
                     }
                     else if (buttonId.equals("BTN_RESEND_ALERT")) {
                         if (!isAdmin(incomingNumber)) return new ResponseEntity<>(HttpStatus.FORBIDDEN);
@@ -134,12 +135,21 @@ public class WebhookController {
                             "It is currently " + current.getName() + "'s turn.");
                     } 
                     else if (buttonId.equals("BTN_APPROVE")) {
+                    
                         choreManager.approveBypass();
                         whatsAppService.sendUserInfoMessage(incomingNumber, 
                             "Request Approved. The turn has been rotated.");
+
+                            
+
+                    // 2. Get the new person
+                    FamilyMember newMember = choreManager.getCurrentMember();
+                    whatsAppService.sendTemplateMessage(newMember.getPhoneNumber(), "daily_chore_alert", newMember.getName());
                     }
                     else if (buttonId.equals("BTN_DENY")) {
                         whatsAppService.sendUserInfoMessage(incomingNumber, "You denied the request.");
+                         whatsAppService.sendUserInfoMessage(choreManager.getCurrentMember().getPhoneNumber(), 
+                            "Request to skip was denied by Admin.");
                     }
                 }
 
@@ -245,6 +255,11 @@ public class WebhookController {
         } 
         else if (result.equals("APPROVED_AUTO")) {
             whatsAppService.sendUserInfoMessage(phoneNumber, "Auto-Approved! Turn rotated.");
+             choreManager.approveBypass();
+
+        // 2. Get the new person
+        FamilyMember newMember = choreManager.getCurrentMember();
+         whatsAppService.sendTemplateMessage(newMember.getPhoneNumber(), "daily_chore_alert", newMember.getName());
         } 
         else {
             whatsAppService.sendUserInfoMessage(phoneNumber, result);

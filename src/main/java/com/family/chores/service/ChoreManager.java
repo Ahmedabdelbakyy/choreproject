@@ -63,6 +63,7 @@ public class ChoreManager {
         getCurrentMember().setLastTurnSkipped(true);
         currentIndex = (currentIndex + 1) % familyMembers.size();
         System.out.println("Bypass approved. Turn moved to " + getCurrentMember().getName());
+
     }
 
     public String requestBypass(String phoneNumber, String reason) {
@@ -71,7 +72,6 @@ public class ChoreManager {
             return "It is not your turn, so you cannot skip.";
         }
         if ("Parent".equalsIgnoreCase(current.getRole()) || "Admin".equalsIgnoreCase(current.getRole())) {
-            approveBypass();
             return "APPROVED_AUTO";
         }
         return "PENDING_APPROVAL";
