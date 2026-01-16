@@ -255,6 +255,9 @@ public class WebhookController {
         } 
         else if (result.equals("APPROVED_AUTO")) {
             whatsAppService.sendUserInfoMessage(phoneNumber, "Auto-Approved! Turn rotated.");
+            if(choreManager.getCurrentMember().getName() == "Ashraf") {
+            whatsAppService.sendUserInfoMessage(phoneNumber, "Auto-Approved! Have a safe trip Ashraf!");
+            }
              choreManager.approveBypass();
 
         // 2. Get the new person
