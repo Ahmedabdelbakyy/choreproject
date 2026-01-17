@@ -33,4 +33,20 @@ public class SchedulerService {
         // This will now work even if the phone hasn't messaged the bot in 24 hours
         whatsAppService.sendTemplateMessage(newMember.getPhoneNumber(), "daily_chore_alert", newMember.getName());
     }
+
+    @Scheduled(cron = "0 0 20 * * *") 
+    public void sendDailyChoreReminder2() {
+        System.out.println("--- SCHEDULER TRIGGERED: " + LocalDateTime.now() + " ---");
+
+        
+        
+
+        // 2. Get the new person
+        FamilyMember newMember = choreManager.getCurrentMember();
+        
+
+        // 3. Send the TEMPLATE
+        // This will now work even if the phone hasn't messaged the bot in 24 hours
+        whatsAppService.sendUserInfoMessage(newMember.getPhoneNumber(), "Hello " + newMember.getName() + ", this is your daily chore reminder!");
+    }
 }
