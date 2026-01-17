@@ -25,7 +25,6 @@ public class WebhookController {
     private final ChoreManager choreManager;
     private final WhatsAppService whatsAppService;
 
-    // --- MEMORY: Tracks what each user is doing (e.g., "COMPLAINING") ---
     private final Map<String, String> userStates = new ConcurrentHashMap<>();
 
     public WebhookController(ChoreManager choreManager, WhatsAppService whatsAppService) {
@@ -65,60 +64,56 @@ public class WebhookController {
 
                 System.out.println("Received " + type + " from " + incomingNumber);
 
-                // --- 1. HANDLE IMAGES (Conditional) ---
+                // --- 1. HANDLE IMAGES ---
                 if ("image".equals(type)) {
-                    // CHECK: Did they click "Complain" first?
                     if (isUserComplaining(incomingNumber)) {
                         FamilyMember guiltyMember = choreManager.getMemberToBlame();
                         String imageId = message.path("image").path("id").asText();
                         
                         whatsAppService.sendImageMessage(guiltyMember.getPhoneNumber(), imageId, 
-                            "COMPLAINT: Unfinished work found by " + incomingNumber);
+                            "🚨 *COMPLAINT FILED* 🚨\n\nUnfinished work reported by " + incomingNumber + ".\nCheck the photo! 📸");
                         
                         whatsAppService.sendUserInfoMessage(incomingNumber, 
-                            "Complaint forwarded to " + guiltyMember.getName());
+                            "✅ Complaint forwarded to *" + guiltyMember.getName() + "*.\nHopefully they fix it soon! 🧹");
                         
-                        // Reset State (Stop listening for complaints)
                         userStates.remove(incomingNumber);
                     } else {
-                        // If they sent a random image without clicking Complain
                         whatsAppService.sendUserInfoMessage(incomingNumber, 
-                            "❓ I received your photo, but I don't know what to do with it.\nClick 'Complain' in the menu if this is evidence of a mess.");
+                            "❓ *I received your photo, but I'm confused.*\n\nIf this is evidence of a mess, please click *'Complain'* in the menu first! 📸");
                     }
                 }
 
                 else if ("button".equals(type)) {
                     String buttonId = message.path("button").path("payload").asText();
-                    System.out.println("Button Clicked: " + buttonId);
 
                     if (buttonId.equals("Complain")) {
                         userStates.put(incomingNumber, "COMPLAINING");
                         whatsAppService.sendUserInfoMessage(incomingNumber, 
-                            "I am listening. 📸 Please send a PHOTO of the mess (or text me the issue) now.");
+                            "👂 *I am listening.*\n\n📸 Please send a *PHOTO* of the mess (or text me the details) now. I'm ready to snitch! 📝");
                     }
                     else if (buttonId.equals("Bypass")) {
                         handleSkipRequest(incomingNumber);
                     } 
                 }
 
-                // --- 2. HANDLE BUTTON CLICKS ---
+                // --- 2. HANDLE INTERACTIVE BUTTONS ---
                 else if ("interactive".equals(type)) {
                     String buttonId = message.path("interactive").path("button_reply").path("id").asText();
-                    System.out.println("Button Clicked: " + buttonId);
 
                     if (buttonId.equals("BTN_FORCE_SKIP")) {
                          if (!isAdmin(incomingNumber)) return new ResponseEntity<>(HttpStatus.FORBIDDEN);
                          choreManager.rotateTurn();
                          whatsAppService.sendUserInfoMessage(incomingNumber, 
-                             "Force Skip Successful. New Turn: " + choreManager.getCurrentMember().getName());
-                              whatsAppService.sendTemplateMessage(choreManager.getCurrentMember().getPhoneNumber(), "daily_chore_alert", choreManager.getCurrentMember().getName());
+                             "⚡ *Force Skip Successful!* ⚡\n\nNew Turn: *" + choreManager.getCurrentMember().getName() + "*");
+                         
+                         // Notify the new person
+                         whatsAppService.sendTemplateMessage(choreManager.getCurrentMember().getPhoneNumber(), "daily_chore_alert", choreManager.getCurrentMember().getName());
                     }
                     else if (buttonId.equals("BTN_RESEND_ALERT")) {
                         if (!isAdmin(incomingNumber)) return new ResponseEntity<>(HttpStatus.FORBIDDEN);
                         FamilyMember current = choreManager.getCurrentMember();
-                        // Ensure template name matches your Meta dashboard!
                         whatsAppService.sendTemplateMessage(current.getPhoneNumber(), "daily_chore_alert", current.getName());
-                        whatsAppService.sendUserInfoMessage(incomingNumber, "Alert resent.");
+                        whatsAppService.sendUserInfoMessage(incomingNumber, "📢 *Alert Resent!* They should have received it now.");
                     }
                     else if (buttonId.equals("BTN_SCHEDULE")) {
                         sendSchedule(incomingNumber);
@@ -126,30 +121,23 @@ public class WebhookController {
                     else if (buttonId.equals("BTN_SKIP")) {
                         handleSkipRequest(incomingNumber);
                     } 
-                    // --- NEW: Set State when Complain is clicked ---
-                
-                    // -----------------------------------------------
                     else if (buttonId.equals("BTN_STATUS")) {
                         FamilyMember current = choreManager.getCurrentMember();
                         whatsAppService.sendUserInfoMessage(incomingNumber, 
-                            "It is currently " + current.getName() + "'s turn.");
+                            "⏳ *Current Status*\n\nIt is currently *" + current.getName() + "'s* turn to work! 🏠");
                     } 
                     else if (buttonId.equals("BTN_APPROVE")) {
-                    
                         choreManager.approveBypass();
                         whatsAppService.sendUserInfoMessage(incomingNumber, 
-                            "Request Approved. The turn has been rotated.");
+                            "✅ *Request Approved!* \n\nThe turn has been rotated. Peace restored. 🕊️");
 
-                            
-
-                    // 2. Get the new person
-                    FamilyMember newMember = choreManager.getCurrentMember();
-                    whatsAppService.sendTemplateMessage(newMember.getPhoneNumber(), "daily_chore_alert", newMember.getName());
+                        FamilyMember newMember = choreManager.getCurrentMember();
+                        whatsAppService.sendTemplateMessage(newMember.getPhoneNumber(), "daily_chore_alert", newMember.getName());
                     }
                     else if (buttonId.equals("BTN_DENY")) {
-                        whatsAppService.sendUserInfoMessage(incomingNumber, "You denied the request.");
-                         whatsAppService.sendUserInfoMessage(choreManager.getCurrentMember().getPhoneNumber(), 
-                            "Request to skip was denied by Admin.");
+                        whatsAppService.sendUserInfoMessage(incomingNumber, "🚫 *Request Denied.* \n\nYou said NO. Tough love! 💪");
+                        whatsAppService.sendUserInfoMessage(choreManager.getCurrentMember().getPhoneNumber(), 
+                            "❌ *Request Denied*\n\nThe Admin said no. Get back to work! 🧹");
                     }
                 }
 
@@ -157,20 +145,19 @@ public class WebhookController {
                 else if ("text".equals(type)) {
                     String text = message.path("text").path("body").asText().trim();
                     
-                    // A. COMMANDS (Always work)
                     if (text.equalsIgnoreCase("Admin")) {
                         if (isAdmin(incomingNumber)) {
                             whatsAppService.sendButtonMessage(incomingNumber, 
-                                "ADMIN CONTROLS:", 
+                                "🔒 *ADMIN CONTROLS*", 
                                 "BTN_FORCE_SKIP", "Force Rotate", 
                                 "BTN_RESEND_ALERT", "Resend Alert", null, null);
                         } else {
-                            whatsAppService.sendUserInfoMessage(incomingNumber, "⛔ Access Denied.");
+                            whatsAppService.sendUserInfoMessage(incomingNumber, "⛔ *Access Denied* ⛔\n\nNice try, but you are not the Admin! 🕵️‍♂️");
                         }
                     }
                     else if (text.equalsIgnoreCase("Menu")) {
                          whatsAppService.sendButtonMessage(incomingNumber, 
-                             "What would you like to do?", 
+                             "🤖 *Beep Boop* \n\nWhat would you like to do?", 
                              "BTN_STATUS", "Status", 
                              "BTN_SCHEDULE", "Schedule", 
                              "BTN_SKIP", "Request Skip");
@@ -178,30 +165,26 @@ public class WebhookController {
                     else if (text.equalsIgnoreCase("Status")) {
                         FamilyMember current = choreManager.getCurrentMember();
                         whatsAppService.sendUserInfoMessage(incomingNumber, 
-                            "It is currently " + current.getName() + "'s turn.");
+                            "⏳ *Current Status*\n\nIt is currently *" + current.getName() + "'s* turn to work! 🏠");
                     }
                     else if (text.equalsIgnoreCase("Schedule") || text.equalsIgnoreCase("Check Schedule")) {
                         sendSchedule(incomingNumber);
                     }
                     
-                    // B. TEXT COMPLAINT (Conditional)
                     else {
-                        // CHECK: Did they click "Complain" first?
                         if (isUserComplaining(incomingNumber)) {
                             FamilyMember guiltyMember = choreManager.getMemberToBlame();
                             
                             whatsAppService.sendUserInfoMessage(guiltyMember.getPhoneNumber(), 
-                                "COMPLAINT from " + incomingNumber + ": " + text);
+                                "😤 *COMPLAINT from* " + incomingNumber + ":\n\n\"" + text + "\"");
                                 
                             whatsAppService.sendUserInfoMessage(incomingNumber, 
-                                "Message forwarded to " + guiltyMember.getName());
+                                "📨 *Message forwarded to* " + guiltyMember.getName() + ". Let's see what they say.");
                                 
-                            // Reset State
                             userStates.remove(incomingNumber);
                         } else {
-                            // Ignore random text or treat as "Hello"
                             whatsAppService.sendButtonMessage(incomingNumber, 
-                                "I didn't understand that. Use the Menu:", 
+                                "🤖 *Does not compute...*\n\nI didn't understand that. Please use the Menu below: 👇", 
                                 "BTN_STATUS", "Status", 
                                 "BTN_SCHEDULE", "Schedule", 
                                 "BTN_SKIP", "Request Skip");
@@ -216,7 +199,6 @@ public class WebhookController {
         return new ResponseEntity<>("EVENT_RECEIVED", HttpStatus.OK);
     }
 
-    // --- Helper to Check State ---
     private boolean isUserComplaining(String phoneNumber) {
         return "COMPLAINING".equals(userStates.get(phoneNumber));
     }
@@ -227,8 +209,8 @@ public class WebhookController {
         FamilyMember current = choreManager.getCurrentMember();
         
         for (FamilyMember m : members) {
-             if (m == current) {
-                 sb.append("👉 *").append(m.getName()).append("* (Current)\n");
+             if (m.getPhoneNumber().equals(current.getPhoneNumber())) {
+                 sb.append("👉 *").append(m.getName()).append("* (Current) 🏠\n");
              } else {
                  sb.append("   ").append(m.getName()).append("\n");
              }
@@ -245,26 +227,25 @@ public class WebhookController {
         String result = choreManager.requestBypass(phoneNumber, "Button Request");
         
         if (result.equals("PENDING_APPROVAL")) {
-            whatsAppService.sendUserInfoMessage(phoneNumber, "Request sent to Admin for approval.");
+            whatsAppService.sendUserInfoMessage(phoneNumber, "⏳ *Request Pending*\n\nSent to Admin for approval. Fingers crossed! 🤞");
             
             FamilyMember admin = choreManager.getAdmin();
             whatsAppService.sendButtonMessage(admin.getPhoneNumber(), 
-                "User " + phoneNumber + " requested a skip.", 
+                "📩 *New Request*\n\nUser " + phoneNumber + " wants to skip their turn. \n\n*Approve?*", 
                 "BTN_APPROVE", "Approve", 
                 "BTN_DENY", "Deny", null, null);
         } 
         else if (result.equals("APPROVED_AUTO")) {
-            if(choreManager.getCurrentMember().getName() == "Ashraf") {
-            whatsAppService.sendUserInfoMessage(phoneNumber, "Auto-Approved! Have a safe trip Ashraf!");
+            if(choreManager.getCurrentMember().getName().equalsIgnoreCase("Ashraf")) {
+                whatsAppService.sendUserInfoMessage(phoneNumber, "✈️ *Safe Travels!* \n\nAuto-Approved! Have a safe trip Ashraf! 👋");
             }
             else{
-                whatsAppService.sendUserInfoMessage(phoneNumber, "Auto-Approved! Turn rotated.");
+                whatsAppService.sendUserInfoMessage(phoneNumber, "✅ *Auto-Approved!* \n\nTurn rotated automatically. Enjoy your break! ☕");
             }
              choreManager.approveBypass();
 
-        // 2. Get the new person
-        FamilyMember newMember = choreManager.getCurrentMember();
-         whatsAppService.sendTemplateMessage(newMember.getPhoneNumber(), "daily_chore_alert", newMember.getName());
+            FamilyMember newMember = choreManager.getCurrentMember();
+            whatsAppService.sendTemplateMessage(newMember.getPhoneNumber(), "daily_chore_alert", newMember.getName());
         } 
         else {
             whatsAppService.sendUserInfoMessage(phoneNumber, result);

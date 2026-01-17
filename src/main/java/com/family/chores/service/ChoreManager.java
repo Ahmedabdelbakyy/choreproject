@@ -105,11 +105,11 @@ public class ChoreManager {
     }
 
     public String requestBypass(String phoneNumber, String reason) {
-        FamilyMember current = getCurrentMember();
-        
-        if (!current.getPhoneNumber().equals(phoneNumber)) {
-            return "It is not your turn, so you cannot skip.";
-        }
+    FamilyMember current = getCurrentMember();
+    
+    if (!current.getPhoneNumber().equals(phoneNumber)) {
+        return "🚫 *Hold on!* \nIt is not your turn, so you cannot skip. Nice try! 😉";
+    }
         
         if ("Parent".equalsIgnoreCase(current.getRole()) || "Admin".equalsIgnoreCase(current.getRole())) {
             return "APPROVED_AUTO";
