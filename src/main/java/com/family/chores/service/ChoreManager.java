@@ -33,8 +33,9 @@ public class ChoreManager {
             // Safety Check: If user forgot to set variables, print a warning (or handle gracefully)
             if (phoneAhmed == null) System.err.println("WARNING: PHONE_AHMED is missing!");
 
-            saveInitialMember("Ahmed",   phoneAhmed,   "Admin",  1);
-            saveInitialMember("Ashraf",  phoneAshraf,  "Parent", 2);
+            
+            saveInitialMember("Ashraf",  phoneAshraf,  "Parent", 1);
+            saveInitialMember("Ahmed",   phoneAhmed,   "Admin",  2);
             saveInitialMember("Omar",    phoneOmar,    "Child",  3);
             saveInitialMember("Mohamed", phoneMohamed, "Child",  4);
 
