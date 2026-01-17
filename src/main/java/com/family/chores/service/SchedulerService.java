@@ -18,7 +18,7 @@ public class SchedulerService {
     }
 
     // Currently set to run every minute for testing. 
-    @Scheduled(cron = "0 * * * * *") 
+    @Scheduled(cron = "0 0 8 * * *") 
     public void sendDailyChoreReminder() {
         System.out.println("--- SCHEDULER TRIGGERED: " + LocalDateTime.now() + " ---");
 
