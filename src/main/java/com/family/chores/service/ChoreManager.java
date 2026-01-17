@@ -116,7 +116,6 @@ public class ChoreManager {
         }
         
         if ("Parent".equalsIgnoreCase(current.getRole()) || "Admin".equalsIgnoreCase(current.getRole())) {
-            approveBypass();
             return "APPROVED_AUTO";
         }
         return "PENDING_APPROVAL";
