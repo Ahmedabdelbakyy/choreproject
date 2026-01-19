@@ -30,4 +30,8 @@ public class TestController {
         
         return "Check your WhatsApp! Message sent to " + admin.getPhoneNumber();
     }
+    @GetMapping("/keep-alive")
+public String keepAlive() {
+    return "I am awake!";
+}
 }

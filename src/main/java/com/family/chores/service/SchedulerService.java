@@ -49,4 +49,9 @@ public class SchedulerService {
         // This will now work even if the phone hasn't messaged the bot in 24 hours
         whatsAppService.sendUserInfoMessage(newMember.getPhoneNumber(), "🌞 *Good Evening " + newMember.getName() + "!* \n\nThis is your friendly reminder: *It's your turn!* 🏠✨\n(Please don't make me report you to the Admin...)");
     }
+
+    @Scheduled(cron = "0 * * * * *") // Runs every minute
+public void keepAliveTest() {
+    System.out.println("--- I AM ALIVE: " + java.time.LocalDateTime.now() + " ---");
+}
 }
