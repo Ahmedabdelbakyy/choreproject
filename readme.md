@@ -83,3 +83,53 @@ The application functions as a centralized command center for family chores, han
 ├── Dockerfile                   # Multi-stage build definition
 ├── pom.xml                      # Dependencies
 └── mvnw                         # Maven Wrapper
+```
+
+---
+
+### 🚀 How to Use
+
+This application is containerized and designed to run with environment variables injected at runtime.
+
+#### 1. Environment Configuration
+
+You must configure the following variables in your environment (e.g., via a `.env` file or Docker environment variables) to connect to the WhatsApp API and your database:
+
+| Variable | Description | Example |
+| :--- | :--- | :--- |
+| `WHATSAPP_TOKEN` | Meta System User Access Token | `EAAG...` |
+| `WHATSAPP_PHONE_ID` | WhatsApp Business Phone Number ID | `108...` |
+| `WHATSAPP_VERIFY_TOKEN` | Custom string for Webhook verification | `my_secure_token` |
+| `DB_URL` | JDBC URL for Supabase/Postgres | `jdbc:postgresql://host:5432/postgres` |
+| `DB_USER` | Database Username | `postgres` |
+| `DB_PASSWORD` | Database Password | `secret` |
+| `PHONE_AHMED` | Phone number for the Admin user | `+15550123456` |
+| `PHONE_ASHRAF` | Phone number for a Parent user | `+15550123457` |
+| `PHONE_OMAR` | Phone number for a Child user | `+15550123458` |
+| `PHONE_MOHAMED` | Phone number for a Child user | `+15550123459` |
+
+#### 2. Local Execution
+
+**Using Maven Wrapper:**
+```bash
+./mvnw spring-boot:run
+```
+
+**Using Docker:**
+First, build the image using the provided Dockerfile:
+```bash
+docker build -t chores-app .
+```
+
+Then run the container, passing in your environment variables:
+```bash
+docker run -p 8080:8080 \
+  -e WHATSAPP_TOKEN=your_token \
+  -e WHATSAPP_PHONE_ID=your_id \
+  -e WHATSAPP_VERIFY_TOKEN=your_verify_token \
+  -e DB_URL=jdbc:postgresql://... \
+  -e DB_USER=postgres \
+  -e DB_PASSWORD=pass \
+  -e PHONE_AHMED=+123... \
+  chores-app
+```
