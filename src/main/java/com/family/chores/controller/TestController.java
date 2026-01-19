@@ -17,6 +17,13 @@ public class TestController {
         this.choreManager = choreManager;
     }
 
+    // --- NEW: Simple Health Check for UptimeRobot ---
+    @GetMapping("/health")
+    public String healthCheck() {
+        return "I am alive and running! 🚀";
+    }
+
+    // --- Existing Test Message Endpoint ---
     @GetMapping("/test-message")
     public String triggerTestMessage() {
         // 1. Get your number (The Admin)
@@ -30,8 +37,4 @@ public class TestController {
         
         return "Check your WhatsApp! Message sent to " + admin.getPhoneNumber();
     }
-    @GetMapping("/keep-alive")
-public String keepAlive() {
-    return "I am awake!";
-}
 }
