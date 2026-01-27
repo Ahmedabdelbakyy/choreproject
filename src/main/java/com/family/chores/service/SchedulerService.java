@@ -1,6 +1,7 @@
 package com.family.chores.service;
 
 import com.family.chores.model.FamilyMember;
+import com.family.chores.repository.FamilyMemberRepository; // Import this
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -11,44 +12,30 @@ public class SchedulerService {
 
     private final ChoreManager choreManager;
     private final WhatsAppService whatsAppService;
+    private final FamilyMemberRepository repository; // 1. Inject Repository
 
-    public SchedulerService(ChoreManager choreManager, WhatsAppService whatsAppService) {
+    // 2. Update Constructor to include Repository
+    public SchedulerService(ChoreManager choreManager, WhatsAppService whatsAppService, FamilyMemberRepository repository) {
         this.choreManager = choreManager;
         this.whatsAppService = whatsAppService;
+        this.repository = repository;
     }
 
-    // Currently set to run every minute for testing. 
-    @Scheduled(cron = "0 0 8 * * *") 
-    public void sendDailyChoreReminder() {
-        System.out.println("--- SCHEDULER TRIGGERED: " + LocalDateTime.now() + " ---");
-
-        // 1. Rotate the turn automatically
-        choreManager.rotateTurn();
-
-        // 2. Get the new person
-        FamilyMember newMember = choreManager.getCurrentMember();
-        System.out.println("New Chore Assignee: " + newMember.getName());
-
-        // 3. Send the TEMPLATE
-        // This will now work even if the phone hasn't messaged the bot in 24 hours
-        whatsAppService.sendTemplateMessage(newMember.getPhoneNumber(), "daily_chore_alert", newMember.getName());
-    }
-
+    // --- EXISTING DAILY REMINDER (Keep this) ---
     @Scheduled(cron = "0 0 20 * * *") 
-    public void sendDailyChoreReminder2() {
-        System.out.println("--- SCHEDULER TRIGGERED: " + LocalDateTime.now() + " ---");
-
-        
-        
-
-        // 2. Get the new person
-        FamilyMember newMember = choreManager.getCurrentMember();
-        
-
-        // 3. Send the TEMPLATE
-        // This will now work even if the phone hasn't messaged the bot in 24 hours
-        whatsAppService.sendUserInfoMessage(newMember.getPhoneNumber(), "🌞 *Good Evening " + newMember.getName() + "!* \n\nThis is your friendly reminder: *It's your turn!* 🏠✨\n(Please don't make me report you to the Admin...)");
+    public void sendDailyChoreReminder() {
+        // ... (Your existing code here) ...
     }
 
-    
+    // --- NEW: SUPABASE KEEPER (Runs every 3 days at midnight) ---
+    // Cron Breakdown: 0 sec, 0 min, 0 hour, every 3rd day, any month, any day
+    @Scheduled(cron = "0 0 0 */3 * *") 
+    public void keepDatabaseAwake() {
+        System.out.println("--- 🔌 DATABASE PING: Keeping Supabase Awake (" + LocalDateTime.now() + ") ---");
+        
+        // This simple query hits the DB and resets Supabase's 7-day inactivity timer
+        long count = repository.count();
+        
+        System.out.println("--- ✅ PING SUCCESS. Member count: " + count + " ---");
+    }
 }
